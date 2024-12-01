@@ -3,4 +3,4 @@
 This is sloppy code. Only use it for inspiration for your own advent of code adventures.
 Most of these are the first working version and they can certainly be written more cleanly.
 
-Input files should be placed under adventYYYY/input/dayX
+Input files should be placed under adventYYYY/input/dayX.txt

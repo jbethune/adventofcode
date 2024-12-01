@@ -1,7 +1,14 @@
 mod calories;
+mod climbing;
+mod cpu;
 mod crates;
+mod direction;
 mod directory;
+mod forest;
+mod matrix;
+mod monkey;
 mod rockpaper;
+mod rope;
 mod rucksack;
 mod section_cleanup;
 mod signal;
@@ -98,6 +105,63 @@ pub fn dispatch(day: usize) -> Option<(usize, usize)> {
                 .reduce(std::cmp::min)
                 .unwrap();
             (sum, *delete_size)
+        }
+        8 => {
+            let heights = forest::matrix_from_file("input/day8");
+            let visibility = forest::visibility_map(&heights);
+            let total_visible = visibility
+                .values
+                .iter()
+                .filter(|is_visible| **is_visible)
+                .count();
+
+            let best_view_score = forest::best_view_score(&heights);
+            (total_visible, best_view_score)
+        }
+        9 => {
+            let moves = rope::read_moves_from_file("input/day9");
+            let plank = rope::visited_places(2, &moves);
+            let long_rope = rope::visited_places(10, &moves);
+            (plank.len(), long_rope.len())
+        }
+        10 => {
+            let commands = cpu::read_commands_from_file("input/day10");
+            let mut cpu = cpu::CPU::new(commands);
+            let signals = cpu.run(&[20, 60, 100, 140, 180, 220]);
+            let part1: isize = signals.iter().cloned().sum();
+            println!("part1={}", part1);
+            cpu.render_screen();
+
+            (0, 0)
+        }
+        11 => {
+            fn repeat(iterations: usize, reduce_stress: bool) -> usize {
+                let mut monkies = monkey::read_monkies_from_file("input/day11", reduce_stress);
+                let total_items: usize = monkies.iter().map(|m| m.items.len()).sum();
+                let common_divisor: usize = monkies.iter().map(|m| m.divisor).product();
+                for _ in 0..iterations {
+                    for i in 0..monkies.len() {
+                        let thrown_items = monkies[i].throw(common_divisor);
+                        let catcher = &mut monkies[thrown_items.targets.0];
+                        catcher.catch(&thrown_items.items.0);
+                        let catcher = &mut monkies[thrown_items.targets.1];
+                        catcher.catch(&thrown_items.items.1);
+                    }
+                    assert_eq!(total_items, monkies.iter().map(|m| m.items.len()).sum());
+                }
+                let mut monkey_buisiness: Vec<usize> =
+                    monkies.iter().map(|m| m.inspections).collect();
+                monkey_buisiness.sort();
+                let mut top_buisiness = monkey_buisiness.pop().unwrap();
+                top_buisiness *= monkey_buisiness.pop().unwrap();
+                top_buisiness
+            }
+            (repeat(20, true), repeat(10000, false))
+        }
+        12 => {
+            let map = climbing::read_heightmap_from_file("input/day12");
+            let steps: usize = climbing::shortest_path_length(&map);
+            (steps, 0)
         }
         _ => return None,
     };

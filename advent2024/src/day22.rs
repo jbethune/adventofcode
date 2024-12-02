@@ -1,10 +1,10 @@
 use camino::Utf8Path as Path;
 
-fn part1(input: &Path) -> usize {
+fn part1(_input: &Path) -> usize {
     42
 }
 
-fn part2(input: &Path) -> usize {
+fn part2(_input: &Path) -> usize {
     42
 }
 

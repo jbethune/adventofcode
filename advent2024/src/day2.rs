@@ -46,9 +46,7 @@ fn is_safe(levels: &[usize], use_dampener: bool) -> bool {
     {
         true // all flawless!
     } else if use_dampener {
-        let mut new_vec = Vec::with_capacity(levels.len() - 1);
-        new_vec.extend_from_slice(&levels[1..]); // leave first element out
-        assert_eq!(new_vec.len() + 1, levels.len());
+        let mut new_vec: Vec<usize> = levels[1..].into(); // leave 1 level out each iteration
 
         for (i, level) in levels.iter().enumerate() {
             // brute force: Try all report subsets
@@ -56,7 +54,7 @@ fn is_safe(levels: &[usize], use_dampener: bool) -> bool {
                 return true;
             }
 
-            // swap next element out
+            // swap next level out
             if i < new_vec.len() {
                 new_vec[i] = *level;
             } // else: break

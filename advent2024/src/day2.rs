@@ -48,8 +48,8 @@ fn is_safe(levels: &[usize], use_dampener: bool) -> bool {
     } else if use_dampener {
         let mut sublist: Vec<usize> = levels[1..].into();
 
+        // brute force: Try leaving each level out
         for (i, level) in levels.iter().enumerate() {
-            // brute force: Try leaving each level out
             if is_safe(&sublist, false) {
                 return true;
             }

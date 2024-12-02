@@ -23,14 +23,14 @@ fn read_input(input: &Path) -> Vec<Vec<usize>> {
     result
 }
 
-fn determine_ordering(numbers: &[usize], use_dampener: bool) -> Ordering {
+fn determine_ordering(levels: &[usize], use_dampener: bool) -> Ordering {
     if use_dampener {
-        let left = min(numbers[0], numbers[1]);
-        let right_values = numbers.last_chunk::<2>().unwrap();
+        let left = min(levels[0], levels[1]);
+        let right_values = levels.last_chunk::<2>().unwrap();
         let right = max(right_values[0], right_values[1]);
         left.cmp(&right)
     } else {
-        numbers[0].cmp(&numbers[1])
+        levels[0].cmp(&levels[1])
     }
 }
 
@@ -46,18 +46,18 @@ fn is_safe(levels: &[usize], use_dampener: bool) -> bool {
     {
         true // all flawless!
     } else if use_dampener {
-        let mut new_vec: Vec<usize> = levels[1..].into(); // leave 1 level out each iteration
+        let mut sublist: Vec<usize> = levels[1..].into();
 
         for (i, level) in levels.iter().enumerate() {
-            // brute force: Try all report subsets
-            if is_safe(&new_vec, false) {
+            // brute force: Try leaving each level out
+            if is_safe(&sublist, false) {
                 return true;
             }
 
             // swap next level out
-            if i < new_vec.len() {
-                new_vec[i] = *level;
-            } // else: break
+            if i < sublist.len() {
+                sublist[i] = *level;
+            } // else: last loop iteration
         }
         false // found no safe subset
     } else {

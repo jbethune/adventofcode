@@ -54,8 +54,8 @@ fn is_safe(levels: &[usize], use_dampener: bool) -> bool {
                 return true;
             }
 
-            // swap next level out
             if i < sublist.len() {
+                // swap next level out
                 sublist[i] = *level;
             } // else: last loop iteration
         }

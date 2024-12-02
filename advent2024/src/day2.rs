@@ -34,28 +34,31 @@ fn determine_ordering(numbers: &[usize], use_dampener: bool) -> Ordering {
     }
 }
 
-fn is_safe(numbers: &[usize], use_dampener: bool) -> bool {
-    let ordering = determine_ordering(numbers, use_dampener);
+fn is_safe(levels: &[usize], use_dampener: bool) -> bool {
+    let ordering = determine_ordering(levels, use_dampener);
     if ordering == Ordering::Equal {
         return false; // neither ascending nor descending
     }
-    if numbers
+    if levels
         .iter()
-        .zip(&numbers[1..])
+        .zip(&levels[1..])
         .all(|(a, b)| a.cmp(b) == ordering && a.abs_diff(*b) <= 3)
     {
         true // all flawless!
     } else if use_dampener {
-        let mut new_vec = Vec::with_capacity(numbers.len() - 1);
-        for i in 0..numbers.len() {
+        let mut new_vec = Vec::with_capacity(levels.len() - 1);
+        new_vec.extend_from_slice(&levels[1..]); // leave first element out
+        assert_eq!(new_vec.len() + 1, levels.len());
+        for (i, level) in levels.iter().enumerate() {
             // brute force: Try all report subsets
-            new_vec.clear();
-            new_vec.extend_from_slice(&numbers[..i]);
-            new_vec.extend_from_slice(&numbers[i + 1..]);
-            assert_eq!(new_vec.len() + 1, numbers.len());
             if is_safe(&new_vec, false) {
                 return true;
             }
+
+            // swap next element out
+            if i < new_vec.len() {
+                new_vec[i] = *level;
+            } // else: break
         }
         false // found no safe subset
     } else {

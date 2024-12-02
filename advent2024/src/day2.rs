@@ -49,6 +49,7 @@ fn is_safe(levels: &[usize], use_dampener: bool) -> bool {
         let mut new_vec = Vec::with_capacity(levels.len() - 1);
         new_vec.extend_from_slice(&levels[1..]); // leave first element out
         assert_eq!(new_vec.len() + 1, levels.len());
+
         for (i, level) in levels.iter().enumerate() {
             // brute force: Try all report subsets
             if is_safe(&new_vec, false) {

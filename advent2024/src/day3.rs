@@ -40,13 +40,11 @@ fn read_code(input: &Path, use_conditionals: bool) -> Vec<usize> {
 }
 
 fn part1(input: &Path) -> usize {
-    let factors = read_code(input, false);
-    factors.iter().sum()
+    read_code(input, false).iter().sum()
 }
 
 fn part2(input: &Path) -> usize {
-    let factors = read_code(input, true);
-    factors.iter().sum()
+    read_code(input, true).iter().sum()
 }
 
 pub fn main(input: &Path) -> (usize, usize) {

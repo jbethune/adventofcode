@@ -10,91 +10,7 @@ struct Equation {
     operands: Vec<usize>,
 }
 
-#[derive(Debug, Clone, Copy)]
-enum Operator {
-    Add,
-    Mul,
-    Glue,
-}
-
-#[derive(Debug, Clone)]
-struct Solution {
-    operators: Vec<Operator>,
-}
-
-impl Solution {
-    fn new(num_operators: usize) -> Self {
-        let operators = vec![Operator::Add; num_operators];
-        Self { operators }
-    }
-
-    // go to next solution candidate. Return false when all options have been exhausted
-    fn advance(&mut self, allow_glue: bool) -> bool {
-        let mut overflows = 0;
-        for i in 0..self.operators.len() {
-            match self.operators[i] {
-                Operator::Add => {
-                    self.operators[i] = Operator::Mul;
-                    break;
-                }
-                Operator::Mul => {
-                    if allow_glue {
-                        self.operators[i] = Operator::Glue;
-                        break;
-                    } else {
-                        self.operators[i] = Operator::Add;
-                        overflows += 1;
-                    }
-                }
-                Operator::Glue => {
-                    self.operators[i] = Operator::Add;
-                    overflows += 1;
-                }
-            }
-        }
-        overflows != self.operators.len()
-    }
-}
-
-impl Equation {
-    fn is_solvable(&self, use_glue: bool) -> bool {
-        let mut solution = Solution::new(self.operands.len() - 1);
-
-        if self.test_solution(&solution) {
-            return true;
-        }
-
-        while solution.advance(use_glue) {
-            if self.test_solution(&solution) {
-                return true;
-            }
-        }
-
-        false
-    }
-
-    fn test_solution(&self, solution: &Solution) -> bool {
-        let mut intermediate = self.operands[0];
-
-        for (operand, operator) in self.operands[1..].iter().zip(&solution.operators) {
-            match operator {
-                Operator::Add => {
-                    intermediate += operand;
-                }
-                Operator::Mul => {
-                    intermediate *= operand;
-                }
-                Operator::Glue => {
-                    intermediate = format!("{intermediate}{operand}").parse().unwrap();
-                }
-            }
-        }
-
-        intermediate == self.result
-    }
-}
-
-fn get_equations(input: &Path) -> Vec<Equation> {
+fn read_equations(input: &Path) -> Vec<Equation> {
     let mut result = vec![];
 
     let reader = BufReader::new(File::open(input).unwrap());
@@ -112,22 +28,44 @@ fn get_equations(input: &Path) -> Vec<Equation> {
     result
 }
 
-fn process_solvable_equations(input: &Path, use_glue: bool) -> usize {
-    get_equations(input)
+// depth-first search that reuses intermediate results
+fn solve_recursively(
+    equation: &Equation,
+    current: usize,
+    operands: &[usize],
+    use_glue: bool,
+) -> bool {
+    if let Some((next, rest)) = operands.split_first() {
+        solve_recursively(equation, current + next, rest, use_glue)
+            || solve_recursively(equation, current * next, rest, use_glue)
+            || use_glue
+                && solve_recursively(
+                    equation,
+                    format!("{current}{next}").parse().unwrap(),
+                    rest,
+                    use_glue,
+                )
+    } else {
+        current == equation.result
+    }
+}
+
+fn part1(equations: &[Equation]) -> usize {
+    equations
         .iter()
-        .filter(|eq| eq.is_solvable(use_glue))
+        .filter(|eq| solve_recursively(eq, eq.operands[0], &eq.operands[1..], false))
+        .map(|eq| eq.result)
+        .sum()
+}
+fn part2(equations: &[Equation]) -> usize {
+    equations
+        .iter()
+        .filter(|eq| solve_recursively(eq, eq.operands[0], &eq.operands[1..], true))
         .map(|eq| eq.result)
         .sum()
 }
 
-fn part1(input: &Path) -> usize {
-    process_solvable_equations(input, false)
-}
-
-fn part2(input: &Path) -> usize {
-    process_solvable_equations(input, true)
-}
-
 pub fn main(input: &Path) -> (usize, usize) {
-    (part1(input), part2(input))
+    let equations = read_equations(input);
+    (part1(&equations), part2(&equations))
 }

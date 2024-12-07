@@ -29,46 +29,49 @@ fn read_equations(input: &Path) -> Vec<Equation> {
     result
 }
 
-// depth-first search that reuses intermediate results
-fn solve_recursively(
-    expected_solution: usize,
-    current: usize,
-    operands: &[usize],
-    use_glue: bool,
-) -> bool {
-    match current.cmp(&expected_solution) {
-        Ordering::Less => {
-            // still room to grow
-            if let Some((next, rest)) = operands.split_first() {
-                solve_recursively(expected_solution, current + next, rest, use_glue)
-                    || solve_recursively(expected_solution, current * next, rest, use_glue)
-                    || use_glue
-                        && solve_recursively(
-                            expected_solution,
-                            format!("{current}{next}").parse().unwrap(),
-                            rest,
-                            use_glue,
-                        )
-            } else {
-                false // we didn't get high enough before we ran out of operands
+fn unglue(current: usize, last: usize, operands: &[usize]) -> bool {
+    let current_str = current.to_string();
+    let last_str = last.to_string();
+    if let Some(new_str) = current_str.strip_suffix(&last_str) {
+        solve_recursively(new_str.parse().unwrap(), operands, true)
+    } else {
+        false // can't be unglued
+    }
+}
+
+// work backwards from the destination to the first operand to drastically reduce the search space
+fn solve_recursively(current: usize, remaining_operands: &[usize], use_glue: bool) -> bool {
+    if let Some((last, rest)) = remaining_operands.split_last() {
+        match last.cmp(&current) {
+            Ordering::Less => {
+                let last = *last;
+
+                // determine which operations could explain the (intermediate) result and follow the paths:
+                current.rem_euclid(last) == 0 && solve_recursively(current / last, rest, use_glue)
+                    || solve_recursively(current - last, rest, use_glue) // we already checked last < current
+                    || use_glue && unglue(current, last, rest)
             }
+            Ordering::Equal => {
+                rest.is_empty() || rest.iter().all(|op| *op == 1) // we can divide by 1 any number of times
+            }
+            Ordering::Greater => false, // overshot the target
         }
-        Ordering::Equal => operands.is_empty() || operands.iter().all(|op| *op <= 1), // allow for an arbitrary number of *1 +0 at the end
-        Ordering::Greater => false, // we got too high
+    } else {
+        false // didn't converge on first operand
     }
 }
 
 fn part1(equations: &[Equation]) -> usize {
     equations
         .iter()
-        .filter(|eq| solve_recursively(eq.result, eq.operands[0], &eq.operands[1..], false))
+        .filter(|eq| solve_recursively(eq.result, &eq.operands, false))
         .map(|eq| eq.result)
         .sum()
 }
 fn part2(equations: &[Equation]) -> usize {
     equations
         .iter()
-        .filter(|eq| solve_recursively(eq.result, eq.operands[0], &eq.operands[1..], true))
+        .filter(|eq| solve_recursively(eq.result, &eq.operands, true))
         .map(|eq| eq.result)
         .sum()
 }

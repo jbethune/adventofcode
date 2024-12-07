@@ -1,4 +1,5 @@
 use std::{
+    cmp::Ordering,
     fs::File,
     io::{BufRead, BufReader},
 };
@@ -30,37 +31,44 @@ fn read_equations(input: &Path) -> Vec<Equation> {
 
 // depth-first search that reuses intermediate results
 fn solve_recursively(
-    equation: &Equation,
+    expected_solution: usize,
     current: usize,
     operands: &[usize],
     use_glue: bool,
 ) -> bool {
-    if let Some((next, rest)) = operands.split_first() {
-        solve_recursively(equation, current + next, rest, use_glue)
-            || solve_recursively(equation, current * next, rest, use_glue)
-            || use_glue
-                && solve_recursively(
-                    equation,
-                    format!("{current}{next}").parse().unwrap(),
-                    rest,
-                    use_glue,
-                )
-    } else {
-        current == equation.result
+    match current.cmp(&expected_solution) {
+        Ordering::Less => {
+            // still room to grow
+            if let Some((next, rest)) = operands.split_first() {
+                solve_recursively(expected_solution, current + next, rest, use_glue)
+                    || solve_recursively(expected_solution, current * next, rest, use_glue)
+                    || use_glue
+                        && solve_recursively(
+                            expected_solution,
+                            format!("{current}{next}").parse().unwrap(),
+                            rest,
+                            use_glue,
+                        )
+            } else {
+                false // we didn't get high enough before we ran out of operands
+            }
+        }
+        Ordering::Equal => operands.is_empty() || operands.iter().all(|op| *op <= 1), // allow for an arbitrary number of *1 +0 at the end
+        Ordering::Greater => false, // we got too high
     }
 }
 
 fn part1(equations: &[Equation]) -> usize {
     equations
         .iter()
-        .filter(|eq| solve_recursively(eq, eq.operands[0], &eq.operands[1..], false))
+        .filter(|eq| solve_recursively(eq.result, eq.operands[0], &eq.operands[1..], false))
         .map(|eq| eq.result)
         .sum()
 }
 fn part2(equations: &[Equation]) -> usize {
     equations
         .iter()
-        .filter(|eq| solve_recursively(eq, eq.operands[0], &eq.operands[1..], true))
+        .filter(|eq| solve_recursively(eq.result, eq.operands[0], &eq.operands[1..], true))
         .map(|eq| eq.result)
         .sum()
 }

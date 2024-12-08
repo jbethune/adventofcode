@@ -87,10 +87,10 @@ fn part1(map: &RadioMap) -> usize {
             let a = &positions[i];
             for b in &positions[i + 1..] {
                 let diff = a.diff(b);
-
                 if let Some(pos) = a.shift(&diff, n) {
                     antinodes.insert(pos);
                 }
+
                 let diff = diff.flip();
                 if let Some(pos) = b.shift(&diff, n) {
                     antinodes.insert(pos);
